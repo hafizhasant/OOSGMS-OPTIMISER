@@ -1,15 +1,15 @@
 #!/system/bin/sh
 
-echo "-----"
-echo "UN-APPLYING TWEAKS"
-echo "-----"
+ui_print "-----"
+ui_print "UN-APPLYING TWEAKS"
+ui_print "-----"
 
 sleep 2
 
-c="su - c pm enable"
+c="su -c pm enable"
 un="cmd package install-existing"
 nline() {
-    echo -e "\n\n\n"
+    ui_print -e "\n\n\n"
 }
 
 store_pm_dump() {
@@ -18,7 +18,7 @@ store_pm_dump() {
 }
 
 service_exists() {
-    echo "$pm_dump_cache" | grep -q "$1"
+    ui_print "$pm_dump_cache" | grep -q "$1"
 }
 
 disable_services() {
@@ -27,7 +27,7 @@ disable_services() {
     services="$@"
 
     if ! pm list packages | cut -d':' -f2 | grep -q "^$package$"; then
-        #echo "$package not found"
+        #ui_print "$package not found"
 	#can uncomment, but more overhead
         return 0
     fi
@@ -36,10 +36,10 @@ disable_services() {
 
     for service in $services; do
         if service_exists "$service"; then
-            echo "Disabling $service in $package"
+            ui_print "Disabling $service in $package"
             $c "$package/$service"
         #else
-            #echo "Service $service not found in $package"
+            #ui_print "Service $service not found in $package"
             #can uncomment, but more overhead
         fi
     done
@@ -123,15 +123,19 @@ $c "$gms/$gms.clearcut.uploader.QosUploaderService"
 $c "$gms/$gms.stats.PlatformStatsCollectorService"
 $c "$gms/$gms.tron.CollectionService"
 $c "$gms/$gms.personalsafety.service.SndDetectionService"
-$c "$gms/$gms.semanticlocation.service.SemanticLocationService"
+
+# Compatability
+$c "$gms/$gms.semanticlocation.service.SemanticLocationService" # Fix timeline
 
 
 $un com.facebook.services
 $un com.facebook.appmanager
 $un com.facebook.system
-$un com.plus.powermonitor
 
-echo "-----"
-echo "Tweaks undone. Please now uninstall the module"
-echo "If you restart without doing so to tweaks will re-apply"
-echo "-----"
+rm -rf /data/local/tmp/empty
+ui_print "Removed temp blank folder"
+
+ui_print "-----"
+ui_print "Tweaks undone. The module will now uninstall itself"
+ui_print "Please restart"
+ui_print "-----"

@@ -1,6 +1,6 @@
 #!/system/bin/sh
-exec > /cache/OOSGMS.txt 2>&1
-echo "Script pre execution"
+exec > /data/adb/modules/OOSGMS-OPTIMISER/logs/OOSGMS.txt 2>&1
+ui_print "Script pre execution"
 
 while true; do
     LOCK_STATE=$(dumpsys window | grep "mDreamingLockscreen=" | sed 's/.*mDreamingLockscreen=//')
@@ -8,19 +8,19 @@ while true; do
     if [ "$LOCK_STATE" = "false" ]; then
         break
     fi
-    echo "Paused script, waiting for unlock"
+    ui_print "Paused script, waiting for unlock"
     sleep 5
 done
 
-sleep 10
+sleep 15
 
-echo "Script beginning"
+ui_print "Script beginning"
 
 c="su -c pm disable"
 un="su -c pm uninstall --user 0"
 
 nline() {
-    echo -e "\n\n\n"
+    ui_print -e "\n\n\n"
 }
 
 store_pm_dump() {
@@ -29,7 +29,7 @@ store_pm_dump() {
 }
 
 service_exists() {
-    echo "$pm_dump_cache" | grep -q "$1"
+    ui_print "$pm_dump_cache" | grep -q "$1"
 }
 
 disable_services() {
@@ -38,7 +38,7 @@ disable_services() {
     services="$@"
 
     if ! pm list packages | cut -d':' -f2 | grep -q "^$package$"; then
-        #echo "$package not found"
+        #ui_print "$package not found"
 	#can uncomment, but more overhead
         return 0
     fi
@@ -47,10 +47,10 @@ disable_services() {
 
     for service in $services; do
         if service_exists "$service"; then
-            echo "Disabling $service in $package"
+            ui_print "Disabling $service in $package"
             $c "$package/$service"
         #else
-            #echo "Service $service not found in $package"
+            #ui_print "Service $service not found in $package"
             #can uncomment, but more overhead
         fi
     done
@@ -134,12 +134,10 @@ $c "$gms/$gms.clearcut.uploader.QosUploaderService"
 $c "$gms/$gms.stats.PlatformStatsCollectorService"
 $c "$gms/$gms.tron.CollectionService"
 $c "$gms/$gms.personalsafety.service.SndDetectionService"
-$c "$gms/$gms.semanticlocation.service.SemanticLocationService"
 
 
 $un com.facebook.services
 $un com.facebook.appmanager
 $un com.facebook.system
-$un com.oplus.powermonitor
 
 exit

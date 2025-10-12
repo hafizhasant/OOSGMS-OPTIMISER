@@ -1,7 +1,9 @@
-Disabled more bloat
+Fixed Google location timeline
 
-Fixed some GMS services not being disabled
+Action button now automatically uninstalls the module
 
-Disabled more GMS bloat
+Fixed VoWIFI
 
-Full Magic Mount support
+Misc changes
+
+Feature suggestions always welcomed
