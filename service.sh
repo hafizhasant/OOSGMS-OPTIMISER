@@ -4,6 +4,10 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 3
 done
 
+# Package & System Details
+PKG="com.google.android.gms"
+GMS_UID=$(pm list packages -U | grep "package:$PKG " | awk -F'uid:' '{print $2}')
+
 # --- PHASE 1: DISABLE OXYGENOS TELEMETRY ---
 pm disable --user 0 com.oneplus.healthcheck 2>/dev/null
 pm disable --user 0 com.oplus.analytics 2>/dev/null
@@ -12,24 +16,24 @@ pm disable --user 0 com.oplus.crashbox 2>/dev/null
 pm disable --user 0 com.oplus.logkit 2>/dev/null
 pm disable --user 0 com.oplus.stdid 2>/dev/null
 
-# --- PHASE 2: PERMANENT GMS RECEIVER & SERVICE DISABLES ---
-PKG="com.google.android.gms"
+# --- PHASE 2: PERMANENT GMS RECEIVER DISABLES ---
 RECEIVERS=(
     "com.google.android.gms.analytics.AnalyticsReceiver"
     "com.google.android.gms.analytics.AnalyticsService"
     "com.google.android.gms.common.stats.GmsCoreStatsService"
     "com.google.android.gms.stats.service.DropBoxEntryAddedReceiver"
-    "com.google.android.gms.checkin.CheckinService\$Receiver"
-    "com.google.android.gms.update.SystemUpdateService\$Receiver"
     "com.google.android.gms.measurement.AppMeasurementReceiver"
 )
 
 for rcvr in "${RECEIVERS[@]}"; do
-    pm disable --user 0 "$PKG/$rcvr" 2>/dev/null
+    pm disable "$PKG/$rcvr" 2>/dev/null
 done
 
 # --- PHASE 3: NETWORK & PERMISSION RESTRICTIONS ---
-cmd netpolicy add restrict-background-black-list $PKG 2>/dev/null
+if [ -n "$GMS_UID" ]; then
+    cmd netpolicy add restrict-background-blacklist "$GMS_UID" 2>/dev/null
+fi
+
 pm revoke $PKG android.permission.ACCESS_FINE_LOCATION 2>/dev/null
 pm revoke $PKG android.permission.ACCESS_COARSE_LOCATION 2>/dev/null
 pm revoke $PKG android.permission.BODY_SENSORS 2>/dev/null
