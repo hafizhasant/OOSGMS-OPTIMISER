@@ -1,143 +1,41 @@
 #!/system/bin/sh
-exec > /data/adb/modules/OOSGMS-OPTIMISER/logs/OOSGMS.txt 2>&1
-ui_print "Script pre execution"
-
-while true; do
-    LOCK_STATE=$(dumpsys window | grep "mDreamingLockscreen=" | sed 's/.*mDreamingLockscreen=//')
-    #if [ "$LOCK_STATE" = "true" ] || [ "$LOCK_STATE" = "false" ]; then
-    if [ "$LOCK_STATE" = "false" ]; then
-        break
-    fi
-    ui_print "Paused script, waiting for unlock"
-    sleep 5
+# Wait until system boot completes
+while [ "$(getprop sys.boot_completed)" != "1" ]; do
+    sleep 3
 done
 
-sleep 15
+# Disable OxygenOS 16 / ColorOS telemetry and tracking packages
+pm disable com.oneplus.healthcheck 2>/dev/null
+pm disable com.oplus.analytics 2>/dev/null
+pm disable com.oplus.qualityprotect 2>/dev/null
+pm disable com.oplus.crashbox 2>/dev/null
+pm disable com.oplus.logkit 2>/dev/null
+pm disable com.oplus.stdid 2>/dev/null
 
-ui_print "Script beginning"
+# Disable Google Play Services tracking receivers permanently
+pm disable com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver 2>/dev/null
+pm disable com.google.android.gms/com.google.android.gms.analytics.AnalyticsService 2>/dev/null
+pm disable com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService 2>/dev/null
 
-c="su -c pm disable"
-un="su -c pm uninstall --user 0"
+# Continuous 3-minute sync loop for FCM push notifications
+while true; do
+    # --- PHASE 1: RESTRICT GMS (3 Minutes / 180s) ---
+    cmd deviceidle whitelist -com.google.android.gms 2>/dev/null
+    cmd appops set com.google.android.gms RUN_IN_BACKGROUND ignore
+    cmd appops set com.google.android.gms RUN_ANY_IN_BACKGROUND ignore
+    am set-standby-bucket com.google.android.gms restricted 2>/dev/null
+    
+    sleep 180
 
-nline() {
-    ui_print -e "\n\n\n"
-}
+    # --- PHASE 2: UNRESTRICT & SYNC NOTIFICATIONS (25 Seconds) ---
+    cmd deviceidle whitelist +com.google.android.gms 2>/dev/null
+    cmd appops set com.google.android.gms RUN_IN_BACKGROUND allow
+    cmd appops set com.google.android.gms RUN_ANY_IN_BACKGROUND allow
+    am set-standby-bucket com.google.android.gms active 2>/dev/null
+    
+    # Trigger GMS FCM Heartbeat check to pull queued messages immediately
+    am broadcast -a com.google.android.intent.action.MCS_HEARTBEAT 2>/dev/null
+    am broadcast -a com.google.android.gms.gcm.HEARTBEAT 2>/dev/null
 
-store_pm_dump() {
-    package="$1"
-    pm_dump_cache="$(pm dump "$package" 2>/dev/null)"
-}
-
-service_exists() {
-    ui_print "$pm_dump_cache" | grep -q "$1"
-}
-
-disable_services() {
-    package="$1"
-    shift
-    services="$@"
-
-    if ! pm list packages | cut -d':' -f2 | grep -q "^$package$"; then
-        #ui_print "$package not found"
-	#can uncomment, but more overhead
-        return 0
-    fi
-
-    store_pm_dump "$package"
-
-    for service in $services; do
-        if service_exists "$service"; then
-            ui_print "Disabling $service in $package"
-            $c "$package/$service"
-        #else
-            #ui_print "Service $service not found in $package"
-            #can uncomment, but more overhead
-        fi
-    done
-
-    nline
-}
-
-gms="com.google.android.gms"
-byte="com.bytedance"
-
-SERVICES="
-    $gms.ads.AdActivity
-    $gms.ads.AdService
-    $gms.analytics.AnalyticsTaskService
-    $gms.analytics.AnalyticsService
-    $gms.analytics.service.AnalyticsService
-    $gms.analytics.AnalyticsReceiver
-    $gms.measurement.service.MeasurementBrokerService
-    $gms.measurement.AppMeasurementService
-    $gms.measurement.AppMeasurementJobService
-    $gms.measurement.AppMeasurementReceiver
-    $gms.analytics.CampaignTrackingReceiver
-    $gms.analytics.CampaignTrackingService
-    $byte.sdk.openadsdk.activity.TTAppOpenAdActivity
-    $byte.sdk.openadsdk.activity.TTDelegateActivity
-    $byte.sdk.openadsdk.activity.TTFullScreenExpressVideoActivity
-    $byte.sdk.openadsdk.activity.TTFullScreenVideoActivity
-    $byte.sdk.openadsdk.activity.TTInterstitialActivity
-    $byte.sdk.openadsdk.activity.TTInterstitialExpressActivity
-    $byte.sdk.openadsdk.multipro.aidl.BinderPoolService
-    $byte.applog.collector.Collector
-"
-
-disable_services "com.facebook.katana" $SERVICES
-disable_services "com.instagram.android" $SERVICES
-disable_services "com.reddit.frontpage" $SERVICES
-disable_services "com.ebay.mobile" $SERVICES
-disable_services "com.coinbase.android" $SERVICES
-disable_services "com.discord" $SERVICES
-disable_services "com.oculus.twilight" $SERVICES
-disable_services "com.einnovation.temu" $SERVICES
-disable_services "com.twitter.android" $SERVICES
-disable_services "com.kiloo.subwaysurf" $SERVICES
-disable_services "com.ketchapp.rider" $SERVICES
-disable_services "org.telegram.messenger" $SERVICES
-disable_services "com.google.ar.core" $SERVICES
-disable_services "com.zhiliaoapp.musically" $SERVICES
-disable_services "com.twitter.android" $SERVICES
-disable_services "com.google.android.play.games" $SERVICES
-disable_services "com.google.android.projection.gearhead" $SERVICES
-disable_services "com.google.android.googlequicksearchbox" $SERVICES
-disable_services "com.google.android.youtube" $SERVICES
-disable_services "com.google.android.apps.youtube.music" $SERVICES
-
-$c "$gms/$gms.analytics.AnalyticsTaskService"
-$c "$gms/$gms.analytics.AnalyticsService"
-$c "$gms/$gms.analytics.internal.PlayLogReportingService"
-$c "$gms/$gms.analytics.AnalyticsReceiver"
-$c "$gms/$gms.analytics.service.AnalyticsService"
-$c "$gms/$gms.analytics.analytics.AnalyticsService"
-$c "$gms/$gms.measurement.service.MeasurementBrokerService"
-$c "$gms/$gms.measurement.PackageMeasurementService"
-$c "$gms/$gms.measurement.PackageMeasurementReceiver"
-$c "$gms/$gms.measurement.PackageMeasurementService"
-$c "$gms/$gms.measurement.PackageMeasurementTaskService"
-$c "$gms/$gms.ads.AdRequestBrokerService"
-$c "$gms/$gms.ads.measurement.GmpConversionTrackingBrokerService"
-$c "$gms/$gms.ads.social.GcmSchedulerWakeupService"
-$c "$gms/$gms.ads.identifier.service.AdvertisingIdNotificationService"
-$c "$gms/$gms.ads.identifier.service.AdvertisingIdService"
-$c "$gms/$gms.feedback.OfflineReportSendTaskService"
-$c "$gms/$gms.feedback.FeedbackAsyncService"
-$c "$gms/$gms.ads.jams.NegotiationService"
-$c "$gms/$gms.ads.cache.CacheBrokerService"
-$c "$gms/$gms.common.stats.StatsUploadService"
-$c "$gms/$gms.adid.service.AdIdProviderService"
-$c "$gms/$gms.adsidentity.service.AdServicesExtDataStorageService"
-$c "$gms/$gms.nearby.exposurenotification.WakeUpService"
-$c "$gms/$gms.clearcut.debug.ClearcutDebugDumpService"
-$c "$gms/$gms.clearcut.uploader.QosUploaderService"
-$c "$gms/$gms.stats.PlatformStatsCollectorService"
-$c "$gms/$gms.tron.CollectionService"
-$c "$gms/$gms.personalsafety.service.SndDetectionService"
-
-
-$un com.facebook.services
-$un com.facebook.appmanager
-$un com.facebook.system
-
-exit
+    sleep 25
+done &

@@ -1,8 +1,6 @@
 id=OOSGMS-OPTIMISER
-name=Oxygen OS + GMS optimiser
-version=v1.0.8
-versionCode=9
-author=Epicmann24
-description=Disable some telementry and bloat
-updateJson=https://raw.githubusercontent.com/epicmann24/OOSGMS-OPTIMISER/main/update.json
-
+name=OOS & GMS Optimiser (OOS 16)
+version=v2.0.0-OOS16
+versionCode=200
+author=epicmann24 (OOS 16 update)
+description=Optimises GMS and OxygenOS 16 by removing background trackers, adjusting Doze limits, and tuning runtime props.

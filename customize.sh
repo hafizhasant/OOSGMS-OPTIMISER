@@ -1,11 +1,17 @@
-#!/system/bin/sh
+SKIPUNZIP=0
 
-# Compatability
-su -c pm enable "com.google.android.gms/com.google.android.gms.semanticlocation.service.SemanticLocationService" # Fix timeline
-cmd package install-existing com.oplus.powermonitor # Enable powermonitor, as we now bind mount it instead
+ui_print "--------------------------------------"
+ui_print "       OOS & GMS OPTIMISER v16        "
+ui_print "--------------------------------------"
+ui_print "- Target: OxygenOS 16 / Android 16"
 
-ui_print "Please consider checking out my kernel on xda: https://xdaforums.com/t/kernel-open-beta-epicmann24s-sm8750-kernel-sukisu-ksun-susfs.4719831/"
+# Verify SDK/Android Version
+SDK_VER=$(getprop ro.build.version.sdk)
+if [ "$SDK_VER" -lt 36 ]; then
+    ui_print "! Warning: Device is below Android 16 (SDK $SDK_VER)."
+fi
 
-ui_print "Logs will be saved to /data/adb/modules/OOSGMS-OPTIMISER/logs"
-ui_print "Please Restart :)"
-
+ui_print "- Applying permissions..."
+set_perm_recursive $MODPATH 0 0 0755 0644
+set_perm $MODPATH/service.sh 0 0 0755
+set_perm $MODPATH/action.sh 0 0 0755
