@@ -1,31 +1,10 @@
 #!/system/bin/sh
-mkdir -p /data/local/tmp/empty
+# Early boot tweaks for OxygenOS 16 / Android 16
 
-mount --bind /data/local/tmp/empty /system_ext/app/CrashBox
-mount --bind /data/local/tmp/empty /system_ext/app/EidService
-mount --bind /data/local/tmp/empty /system_ext/app/LogKit
-mount --bind /data/local/tmp/empty /system_ext/app/Olc
-mount --bind /data/local/tmp/empty /system_ext/app/OplusLocationService
-mount --bind /data/local/tmp/empty /system_ext/app/OTrace
-mount --bind /data/local/tmp/empty /system_ext/app/QCC
-mount --bind /data/local/tmp/empty /system_ext/app/LFEHer
-mount --bind /data/local/tmp/empty /system_ext/app/OplusQualityProtect
-mount --bind /data/local/tmp/empty /system_ext/priv-app/com.qualcomm.location
-mount --bind /data/local/tmp/empty /system_ext/app/QesdkSysService
-mount --bind /data/local/tmp/empty /product/app/StdSP
-mount --bind /data/local/tmp/empty /product/priv-app/DCS
-mount --bind /data/local/tmp/empty /product/priv-app/Metis
-mount --bind /data/local/tmp/empty /vendor/app/TxPwrAdmin
-mount --bind /data/local/tmp/empty /vendor/app/TrustZoneAccessService
-mount --bind /data/local/tmp/empty /system_ext/priv-app/xrvdservice
-mount --bind /data/local/tmp/empty /product/app/DeviceStatisticsService
-mount --bind /data/local/tmp/empty /system_ext/app/OwkService
-mount --bind /data/local/tmp/empty /my_stock/non_overlay/app/OBrain
-mount --bind /data/local/tmp/empty /system_ext/app/SoterService
-mount --bind /data/local/tmp/empty /system_ext/app/TTSatelliteAuth
-mount --bind /data/local/tmp/empty /product/app/MCS
-mount --bind /data/local/tmp/empty /product/priv-app/Facebook-installer
-mount --bind /data/local/tmp/empty /product/app/Facebook-appmanager
-mount --bind /data/local/tmp/empty /system/app/Traceur
+# Disable kernel debugging and telemetry loggers early
+resetprop -n persist.sys.assert.enable false
+resetprop -n persist.sys.oplus.crash.catch false
+resetprop -n persist.sys.log.output false
 
-exit 0
+# Aggressive Doze and Deep Sleep parameters
+resetprop -n device_idle_constants "inactive_to=30000,sensing_to=0,locating_to=0,location_accuracy=20.0,motion_inactive_to=0,idle_after_inactive_to=0,idle_to=3600000,max_idle_to=21600000"
