@@ -1,6 +1,6 @@
 id=OOSGMS-OPTIMISER
 name=OOS & GMS Optimiser (OOS 16)
-version=v2.0.0-OOS16
-versionCode=200
+version=v2.1.0
+versionCode=210
 author=hafizhasant (forked from epicmann24)
 description=Optimises GMS and OxygenOS 16 by removing background trackers, adjusting Doze limits, and tuning runtime props.

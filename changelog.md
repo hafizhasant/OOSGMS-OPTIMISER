@@ -1,7 +1,7 @@
 # Changelog - OOS & GMS Optimiser
 
-## v2.0.0-OOS16 (OxygenOS 16 / Android 16)
-- **Target OS Update:** Initial fork and full compatibility update for OxygenOS 16 / Android 16 (SDK 36).
+## v2.1.0 (OxygenOS 16 / Android 16)
+- **Version Scheme Update:** Standardized version naming and asset structure.
 - **OxygenOS Telemetry Removal:** Disables proprietary OOS/ColorOS analytics packages using `--user 0` execution state.
 - **Smart Notification Sync Loop:** Implemented a continuous 3-minute / 25-second background daemon loop:
   - Keeps GMS restricted for 180s to maximize battery life.
