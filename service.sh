@@ -5,17 +5,17 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
 done
 
 # Disable OxygenOS 16 / ColorOS telemetry and tracking packages
-pm disable com.oneplus.healthcheck 2>/dev/null
-pm disable com.oplus.analytics 2>/dev/null
-pm disable com.oplus.qualityprotect 2>/dev/null
-pm disable com.oplus.crashbox 2>/dev/null
-pm disable com.oplus.logkit 2>/dev/null
-pm disable com.oplus.stdid 2>/dev/null
+pm disable --user 0 com.oneplus.healthcheck 2>/dev/null
+pm disable --user 0 com.oplus.analytics 2>/dev/null
+pm disable --user 0 com.oplus.qualityprotect 2>/dev/null
+pm disable --user 0 com.oplus.crashbox 2>/dev/null
+pm disable --user 0 com.oplus.logkit 2>/dev/null
+pm disable --user 0 com.oplus.stdid 2>/dev/null
 
 # Disable Google Play Services tracking receivers permanently
-pm disable com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver 2>/dev/null
-pm disable com.google.android.gms/com.google.android.gms.analytics.AnalyticsService 2>/dev/null
-pm disable com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService 2>/dev/null
+pm disable --user 0 com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver 2>/dev/null
+pm disable --user 0 com.google.android.gms/com.google.android.gms.analytics.AnalyticsService 2>/dev/null
+pm disable --user 0 com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService 2>/dev/null
 
 # Continuous 3-minute sync loop for FCM push notifications
 while true; do
