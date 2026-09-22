@@ -4,7 +4,7 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 3
 done
 
-# Disable OxygenOS 16 / ColorOS telemetry and tracking packages
+# --- PHASE 1: DISABLE OXYGENOS TELEMETRY ---
 pm disable --user 0 com.oneplus.healthcheck 2>/dev/null
 pm disable --user 0 com.oplus.analytics 2>/dev/null
 pm disable --user 0 com.oplus.qualityprotect 2>/dev/null
@@ -12,28 +12,46 @@ pm disable --user 0 com.oplus.crashbox 2>/dev/null
 pm disable --user 0 com.oplus.logkit 2>/dev/null
 pm disable --user 0 com.oplus.stdid 2>/dev/null
 
-# Disable Google Play Services tracking receivers permanently
-pm disable --user 0 com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver 2>/dev/null
-pm disable --user 0 com.google.android.gms/com.google.android.gms.analytics.AnalyticsService 2>/dev/null
-pm disable --user 0 com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService 2>/dev/null
+# --- PHASE 2: PERMANENT GMS RECEIVER & SERVICE DISABLES ---
+PKG="com.google.android.gms"
+RECEIVERS=(
+    "com.google.android.gms.analytics.AnalyticsReceiver"
+    "com.google.android.gms.analytics.AnalyticsService"
+    "com.google.android.gms.common.stats.GmsCoreStatsService"
+    "com.google.android.gms.stats.service.DropBoxEntryAddedReceiver"
+    "com.google.android.gms.checkin.CheckinService\$Receiver"
+    "com.google.android.gms.update.SystemUpdateService\$Receiver"
+    "com.google.android.gms.measurement.AppMeasurementReceiver"
+)
 
-# Continuous 3-minute sync loop for FCM push notifications
+for rcvr in "${RECEIVERS[@]}"; do
+    pm disable --user 0 "$PKG/$rcvr" 2>/dev/null
+done
+
+# --- PHASE 3: NETWORK & PERMISSION RESTRICTIONS ---
+cmd netpolicy add restrict-background-black-list $PKG 2>/dev/null
+pm revoke $PKG android.permission.ACCESS_FINE_LOCATION 2>/dev/null
+pm revoke $PKG android.permission.ACCESS_COARSE_LOCATION 2>/dev/null
+pm revoke $PKG android.permission.BODY_SENSORS 2>/dev/null
+pm revoke $PKG android.permission.ACTIVITY_RECOGNITION 2>/dev/null
+
+# --- PHASE 4: CONTINUOUS 3-MINUTE FCM SYNC LOOP ---
 while true; do
-    # --- PHASE 1: RESTRICT GMS (3 Minutes / 180s) ---
-    cmd deviceidle whitelist -com.google.android.gms 2>/dev/null
-    cmd appops set com.google.android.gms RUN_IN_BACKGROUND ignore
-    cmd appops set com.google.android.gms RUN_ANY_IN_BACKGROUND ignore
-    am set-standby-bucket com.google.android.gms restricted 2>/dev/null
+    # RESTRICT STATE (3 Minutes / 180s)
+    cmd deviceidle whitelist -$PKG 2>/dev/null
+    cmd appops set $PKG RUN_IN_BACKGROUND ignore
+    cmd appops set $PKG RUN_ANY_IN_BACKGROUND ignore
+    am set-standby-bucket $PKG restricted 2>/dev/null
+    cmd jobscheduler cancel -u 0 $PKG 2>/dev/null
     
     sleep 180
 
-    # --- PHASE 2: UNRESTRICT & SYNC NOTIFICATIONS (25 Seconds) ---
-    cmd deviceidle whitelist +com.google.android.gms 2>/dev/null
-    cmd appops set com.google.android.gms RUN_IN_BACKGROUND allow
-    cmd appops set com.google.android.gms RUN_ANY_IN_BACKGROUND allow
-    am set-standby-bucket com.google.android.gms active 2>/dev/null
+    # UNRESTRICT STATE (25 Seconds - Push Notification Pull)
+    cmd deviceidle whitelist +$PKG 2>/dev/null
+    cmd appops set $PKG RUN_IN_BACKGROUND allow
+    cmd appops set $PKG RUN_ANY_IN_BACKGROUND allow
+    am set-standby-bucket $PKG active 2>/dev/null
     
-    # Trigger GMS FCM Heartbeat check to pull queued messages immediately
     am broadcast -a com.google.android.intent.action.MCS_HEARTBEAT 2>/dev/null
     am broadcast -a com.google.android.gms.gcm.HEARTBEAT 2>/dev/null
 
